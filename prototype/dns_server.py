@@ -126,6 +126,7 @@ if __name__ == '__main__':
     HOST = ''
     TCP_PORT = 53
     UDP_PORT = 53
+    hosts = [b"pbanner.gi0cann.io"]
 
     udpserver = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     udpserver.bind((HOST, UDP_PORT))
@@ -136,10 +137,17 @@ if __name__ == '__main__':
             print("Start request: ", address)
         if data:
             request = dnsRequest(data)
+            hostname = request.getHostname()
+            resolved_address = "10.0.0.141"
             print("Transaction ID: ", request.transaction_id)
             print("Flags: ", request.flags)
-            print("Name: ", request.getHostname())
+            print("Name: ", hostname)
             print("Type: ", request.getType())
+            print("End request: ", address)
+            print("Start response: ", address)
+            if hostname not in hosts:
+                resolved_address = socket.gethostbyname(hostname)
+            print("Resolved Address: ", resolved_address)
             response = dnsResponse()
             response.transaction_id = request.transaction_id
             response.flags = struct.unpack(">H", request.flags)[0] + 0x8080
@@ -156,8 +164,8 @@ if __name__ == '__main__':
             response.answers["Class"] = struct.pack(">H", 0x0001)
             response.answers["TTL"] = struct.pack(">I", 0x000000ee)
             response.answers["Data_length"] = struct.pack(">H", 0x0004)
-            response.setAddress("127.0.0.1")
+            response.setAddress(resolved_address)
             response_data = response.getResponsedata()
             sent = udpserver.sendto(response_data, address)
-            print("End request: ", address)
+            print("End response: ", address)
 
